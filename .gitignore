@@ -1,0 +1,8 @@
+# Ignorer les données
+data/*
+
+
+# Ignorer les fichiers temporaires Python et Jupyter
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
