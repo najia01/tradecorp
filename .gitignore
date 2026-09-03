@@ -1,6 +1,6 @@
 # Ignorer les données
 data/*
-
+.env
 
 # Ignorer les fichiers temporaires Python et Jupyter
 __pycache__/

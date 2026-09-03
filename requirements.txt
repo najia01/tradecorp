@@ -1,0 +1,7 @@
+azure-storage-blob
+pytest
+requests
+pyspark
+apache-airflow-providers-docker
+
+
