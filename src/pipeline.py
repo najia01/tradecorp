@@ -55,7 +55,7 @@ def run_pipeline():
         
         # Écriture des données nettoyées dans la zone clean
         logging.info("Étape 4 : Écriture au format Parquet")
-        clean_data(df_transformed)
+        clean_data(df_final)
         
         logging.info("--- PIPELINE EXÉCUTÉ AVEC SUCCÈS ---")
         
