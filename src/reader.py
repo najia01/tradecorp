@@ -2,7 +2,9 @@ import os
 from pyspark.sql import SparkSession
 from utils import download_blob_to_local, get_adls_client
 
+
 LOCAL_RAW_DIR = "/home/jovyan/data/raw/"
+LOCAL_REF_DIR = "/home/jovyan/data/raw/reference/"
 FILES = [
     "categories.csv",
     "customers.csv",
@@ -12,6 +14,11 @@ FILES = [
     "products.csv",
     "shippers.csv",
     "suppliers.csv"
+]
+
+REFERENCE_FILES = [
+    "reference/country_currency.csv",
+    "reference/exchange_rates.json"
 ]
 
 def lister_fichiers_azure(container_name="raw"):
@@ -29,42 +36,74 @@ def lister_fichiers_azure(container_name="raw"):
     print("----------------------------------------------\n")
 
 def download_raw_data(container_name="raw"):
-    """Télécharge les fichiers CSV depuis le conteneur Azure vers le dossier local."""
+    "Télécharge les fichiers CSV depuis le conteneur Azure vers le dossier local."
     print("Téléchargement des fichiers depuis Azure en cours...")
     for fichier in FILES:
         print(f"-> Téléchargement de : '{fichier}'")
         local_path = os.path.join(LOCAL_RAW_DIR, fichier)
         download_blob_to_local(container_name, fichier, local_path)
-    print("✅ Téléchargement terminé avec succès !\n")
+    
+    # création obligatoire du dossier dans le conteneur
+    os.makedirs(LOCAL_REF_DIR, exist_ok=True)
+        
+    for ref_file in REFERENCE_FILES:
+        print(f"-> Téléchargement de la référence : '{ref_file}'")
+        # ref_file contient déjà "reference/..."
+        local_path = os.path.join(LOCAL_RAW_DIR, ref_file)
+        download_blob_to_local(container_name, ref_file, local_path)
+        
+    print("Téléchargement terminé avec succès !\n")
 
 def read_raw_data(spark):
-    """Lit les fichiers CSV locaux dans des DataFrames PySpark."""
+    # Lit les fichiers CSV locaux dans des DataFrames PySpark.
     dataframes = {}
     for nom in FILES:
         nom_sans_ext = nom.replace(".csv", "")
         fichier_path = os.path.join(LOCAL_RAW_DIR, nom)
         dataframes[nom_sans_ext] = spark.read.csv(fichier_path, header=True, inferSchema=True)
+        
     return dataframes
 
+def read_reference_data(spark):
+    # "lecture des fichiers de référence (CSV et JSON) "
+    ref_dfs = {}
+    
+    #lecture du mapping pays/devise (CSV)
+    country_curr_path = os.path.join(LOCAL_RAW_DIR, "reference/country_currency.csv")
+    ref_dfs["country_currency"] = spark.read.csv(country_curr_path, header=True, inferSchema=True)
+    
+    #lecture des taux de change (JSON)[cite: 1]
+    exchange_rates_path = os.path.join(LOCAL_RAW_DIR, "reference/exchange_rates.json")
+    ref_dfs["exchange_rates"] = spark.read.json(exchange_rates_path)
+    
+    return ref_dfs
+
+
 def main():
-    # Initialisation de la session Spark
+    #initialisation de la session Spark
     spark = SparkSession.builder.appName("TestReader").getOrCreate()
     
-    # 1. Étape de diagnostic Azure
+    #étape de diagnostic Azure
     lister_fichiers_azure("raw")
     
     try:
-        # 2. Téléchargement des fichiers
+        #téléchargement des fichiers
         download_raw_data("raw")
         
-        # 3. Lecture avec PySpark
+        #lecture avec PySpark
         dfs = read_raw_data(spark)
-        print(f"{len(dfs)} DataFrames Spark chargés avec succès !")
+        read_reference_data(spark)
         
-        # 4. Affichage de test pour prouver que les données sont valides
+        print(f"{len(dfs)} DF Spark et {len(ref_dfs)} DF de référence chargés avec succès !")
+        
+        #affichage de test pour prouver que les données sont valides
         if "customers" in dfs:
             print("\nAperçu de la table customers :")
             dfs["customers"].show(5)
+            
+        if "country_currency" in ref_dfs:
+            print("\nAperçu de la table des devises :")
+            ref_dfs["country_currency"].show(5)
             
     except Exception as e:
         print(f"ERREUR LORS DU PIPELINE : {e}")

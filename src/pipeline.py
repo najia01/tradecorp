@@ -2,8 +2,9 @@ import sys
 import os
 import logging
 from pyspark.sql import SparkSession
-from reader import read_raw_data
+from reader import download_raw_data, read_raw_data, read_reference_data
 from transformer import build_enriched
+from enrichment import add_currency_column
 from writer import clean_data
 
 #configuration du système de journalisation 
@@ -30,14 +31,30 @@ def run_pipeline():
         
         # Lecture des données brutes depuis ADLS Gen2
         logging.info("Étape 1 : Lecture des données")
+        download_raw_data("raw")
         df = read_raw_data(spark)
+        ref_dfs = read_reference_data(spark)
         
         # Transformation et enrichissement
         logging.info("Étape 2 : Transformation et enrichissement")
         df_transformed = build_enriched(df)
         
+        # Enrichissement
+        logging.info("Étape 3 : Enrichissement avec devises et taux de change")
+        
+        # Transformation de la ligne JSON en dictionnaire Python
+        ligne_taux = ref_dfs["exchange_rates"].select("rates").first()
+        rates_dict = ligne_taux["rates"].asDict() if ligne_taux else {}
+        
+        df_final = add_currency_column(
+            df_main=df_transformed, 
+            df_country_currency=ref_dfs["country_currency"], 
+            rates_dict=rates_dict, 
+            spark=spark
+        )
+        
         # Écriture des données nettoyées dans la zone clean
-        logging.info("Étape 3 : Écriture au format Parquet")
+        logging.info("Étape 4 : Écriture au format Parquet")
         clean_data(df_transformed)
         
         logging.info("--- PIPELINE EXÉCUTÉ AVEC SUCCÈS ---")

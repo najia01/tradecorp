@@ -3,5 +3,5 @@ pytest
 requests
 pyspark
 apache-airflow-providers-docker
-
+python-dotenv
 
