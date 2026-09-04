@@ -92,7 +92,7 @@ def main():
         
         #lecture avec PySpark
         dfs = read_raw_data(spark)
-        read_reference_data(spark)
+        ref_dfs = read_reference_data(spark)
         
         print(f"{len(dfs)} DF Spark et {len(ref_dfs)} DF de référence chargés avec succès !")
         
