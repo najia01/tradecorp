@@ -6,8 +6,11 @@ from pyspark.sql.types import DoubleType, IntegerType, DateType
 # connexion à ADLS GEN2 
 
 def get_adls_client():
-    account_name = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-    account_key = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
+    # On récupère directement la chaîne de connexion complète
+    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    
+    # On se connecte simplement avec cette chaîne
+    return BlobServiceClient.from_connection_string(connection_string)
     
 # Construction  de l'URL Azure
     account_url = f"https://{account_name}.blob.core.windows.net"

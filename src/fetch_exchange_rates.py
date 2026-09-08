@@ -1,10 +1,11 @@
 import os
 import requests
+import json
 from dotenv import load_dotenv
 from azure.storage.blob import BlobServiceClient
 
 # Chargement des variables d'environnement depuis le fichier .env
-load_dotenv()
+load_dotenv('/home/jovyan/.env')
 
 # Configuration de l'API et d'Azure
 API_URL = "https://api.exchangerate-api.com/v4/latest/USD"
@@ -32,16 +33,20 @@ def main():
 
     # Si les données sont récupérées, on les envoie sur Azure
     if exchange_rates:
+        donnees_json = json.loads(exchange_rates)
+        nombre_devises = len(donnees_json.get('rates', {}))
+        print(f"Succès : {nombre_devises} devises récupérées depuis l'API.")
         try:
-            account_name = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-            account_key = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
-            account_url = f"https://{account_name}.blob.core.windows.net"
+            # On récupère directement la chaîne de connexion complète
+            connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
             
-            blob_service_client = BlobServiceClient(account_url=account_url, credential=account_key)
+            # On utilise la méthode from_connection_string (plus simple !)
+            blob_service_client = BlobServiceClient.from_connection_string(connection_string)
             blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=BLOB_NAME)
             
             blob_client.upload_blob(exchange_rates, overwrite=True)
             print(f'Succès : uploadés dans {CONTAINER_NAME}/{BLOB_NAME}')
+            
         except Exception as e:
             print('Erreur lors de la connexion à Azure :', e)
 

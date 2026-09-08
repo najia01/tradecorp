@@ -1,6 +1,10 @@
 import os
 from pyspark.sql import SparkSession
 from utils import download_blob_to_local, get_adls_client
+from dotenv import load_dotenv
+
+
+load_dotenv('/home/jovyan/.env')
 
 
 LOCAL_RAW_DIR = "/home/jovyan/data/raw/"
@@ -107,7 +111,7 @@ def main():
             
     except Exception as e:
         print(f"ERREUR LORS DU PIPELINE : {e}")
-        
+        raise  # <-- Cette ligne est cruciale pour alerter Airflow !
     finally:
         spark.stop()
 
