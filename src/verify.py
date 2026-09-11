@@ -8,7 +8,6 @@ spark = SparkSession.builder \
     .config("fs.azure.account.key.najiastockage.dfs.core.windows.net", azure_key) \
     .getOrCreate()
 
-# Adaptez le nom du dossier final selon ce que vous avez configuré dans writer.py
 chemin_clean = "abfss://clean@najiastockage.dfs.core.windows.net/build_enriched.parquet"
 
 df_verif = spark.read.parquet(chemin_clean)

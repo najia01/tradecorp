@@ -81,7 +81,7 @@ def test_add_currency_column(spark):
     lignes = df_result.collect()
     resultats = {row["customer_country"]: row["sous_total_local"] for row in lignes}
     
-    #vérifications mathématiques strictes 
+    #vérifications  
     assert resultats["France"] == 90.0     
     assert resultats["Japon"] == 30000.0   
     assert resultats["Wakanda"] == 50.0    

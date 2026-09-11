@@ -111,7 +111,7 @@ def main():
             
     except Exception as e:
         print(f"ERREUR LORS DU PIPELINE : {e}")
-        raise  # <-- Cette ligne est cruciale pour alerter Airflow !
+        raise  # ligne cruciale pour alerter Airflow !
     finally:
         spark.stop()
 

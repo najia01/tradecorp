@@ -47,7 +47,6 @@ def clean_data(df):
 if __name__ == "__main__":
     spark = SparkSession.builder.appName("TradeCorpWriter").getOrCreate()
     
-    # On passe bien 'spark' en argument à la fonction de lecture
     raw_dfs = read_raw_data(spark)
     df_transformed = build_enriched(raw_dfs)
     clean_data(df_transformed)
